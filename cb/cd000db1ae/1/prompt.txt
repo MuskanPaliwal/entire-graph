@@ -1,0 +1,51 @@
+resume the checkpoint
+
+---
+
+other
+
+---
+
+yupp
+
+---
+
+commit it and create a draft pr
+
+---
+
+use unslop and create a trail for this
+
+---
+
+make it descripitve
+
+---
+
+enable the trails here then. file:///Users/muskanpaliwal/Downloads/How%20to%20Enable%20Trails%20(1).pdf
+
+---
+
+trails are on
+
+---
+
+yupp
+
+---
+
+• You ran entire agent-help trail
+  └ entire trail — Manage trails for your branches
+    A trail ties together the context for a branch. Use `entire trail` to view, create, update, or watch it; use `entire trail finding` to manage agent findings.
+
+    Current repo: gh/MuskanPaliwal/entire-graph  (auto-detected from origin; pass --repo only for a DIFFERENT repo)
+
+    Flags:
+          --repo string   Target repository as forge/owner/repo (e.g. gh/acme/app) or a clone URL; defaults to the origin remote
+
+    Inherited flags:
+          --context name   Act as this saved login name for this command only, instead of the active context (entire auth contexts lists them)
+
+    Subcommands: approvals · approve · checkout · comment · create · delete · finding · list · request-changes · resume · show · update · watch
+                 read-only: approvals, list, show, watch — others write
+    Next:  entire agent-help trail <subcommand>
