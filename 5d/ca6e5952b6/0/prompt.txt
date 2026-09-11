@@ -1,0 +1,13 @@
+can you go through latest prs in cli repo and find out what poart of cli the team is working on. so that i can also pick up thing sin that direction
+
+---
+
+https://github.com/entireio/cli/issues/2350 find bugs like this?
+
+---
+
+and also tell me if it's ai written
+
+---
+
+so the three findings are different from the issue?
