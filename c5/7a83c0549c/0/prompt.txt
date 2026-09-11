@@ -1,0 +1,34 @@
+run a proper review agarin using run-playbook
+
+---
+
+Remaining scope
+The narrow test-class route does not yet support an independent nested build through a command such as ./gradlew -p modules test --tests 'ATest'.
+
+The settings scanner accepts literal project declarations. It cannot prove membership when a settings script computes its includes dynamically, so those cases produce no command.
+
+The final fallback message can still say that no build manifest was found when a manifest exists but does not provide enough evidence for a safe command.
+
+Those cases remain, so this PR references rather than closes #219.
+
+ why this is out of scope?
+
+---
+
+ok, fix the finsing
+
+---
+
+ok, fix the finding
+
+---
+
+post the new findings too
+
+---
+
+why? we fixed it? or needs a new follow up?
+
+---
+
+commit and push the changes
