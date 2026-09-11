@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.10.5-nightly.202609030626.408372c97",
+  "checkpoint_id": "a9453ec76e97",
+  "strategy": "manual-commit",
+  "branch": "fix-gradle-verify-project-membership-219",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "internal/sem/search_verify.go",
+    "internal/sem/search_verify_gradle_membership_test.go",
+    "internal/sem/search_verify_test.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a9/453ec76e97/0/metadata.json",
+      "transcript": "/a9/453ec76e97/0/full.jsonl",
+      "compact_transcript": "/a9/453ec76e97/0/transcript.jsonl",
+      "content_hash": "/a9/453ec76e97/0/content_hash.txt",
+      "prompt": "/a9/453ec76e97/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 113427,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5606528,
+    "output_tokens": 23835,
+    "api_call_count": 73
+  }
+}
