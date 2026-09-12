@@ -1,0 +1,113 @@
+{
+  "cli_version": "0.10.5-nightly.202609030626.408372c97",
+  "checkpoint_id": "f908b383ea1e",
+  "session_id": "01a09606-7b5d-71f0-8fdf-54d339e79d37",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-12T16:10:05.07665Z",
+  "branch": "fix-gradle-verify-project-membership-219",
+  "checkpoints_count": 9,
+  "save_step_count": 6,
+  "files_touched": [
+    "internal/sem/search_verify.go",
+    "internal/sem/search_verify_gradle_membership_test.go"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "ff4974622308",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 161592,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 4851456,
+    "output_tokens": 12930,
+    "api_call_count": 82
+  },
+  "session_metrics": {
+    "turn_count": 9
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-12T16:10:05.02524Z",
+    "agent_lines": 114,
+    "agent_removed": 37,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 114,
+    "total_lines_changed": 151,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 315,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269,
+        "HANDOFF.md": 46
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 47,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 47,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 77,
+      "agent_lines_removed": 31,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 130,
+      "agent_lines_removed": 31,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 160,
+      "agent_lines_removed": 37,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 160,
+      "agent_lines_removed": 37,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    }
+  ]
+}
