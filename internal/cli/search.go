@@ -127,10 +127,10 @@ func runSearch(ctx context.Context, opts Options, args []string) error {
 		}
 	}
 	if len(rest) != 0 {
-		return unexpectedArgumentsError("search", opts.Version, rest)
+		return unexpectedArgumentsError("query", opts.Version, rest)
 	}
 	if strings.TrimSpace(flags.Query) == "" {
-		return errors.New("search requires --query")
+		return errors.New("query requires --query or a trailing query argument")
 	}
 	// ZERO-TOLL DELIVERY. When the caller has already computed this session's payload and handed it
 	// to the agent inside context the session pays for anyway, this call must cost nothing: echo
@@ -2445,6 +2445,7 @@ func parseSearchFlags(args []string) (searchFlags, []string, error) {
 	// head result comes back as half a function.
 	flags := searchFlags{Format: "json", Profile: "fast", Worktree: true, MaxContextBytes: defaultSearchContextBytes}
 	var rest []string
+	var queryProvided bool
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--repo":
@@ -2459,6 +2460,7 @@ func parseSearchFlags(args []string) (searchFlags, []string, error) {
 				return flags, nil, err
 			}
 			flags.Query, i = value, next
+			queryProvided = true
 		case "--format":
 			value, next, err := searchFlagValue(args, i)
 			if err != nil {
@@ -2629,7 +2631,13 @@ func parseSearchFlags(args []string) (searchFlags, []string, error) {
 		case "--head":
 			flags.Worktree = false
 		default:
-			rest = append(rest, args[i])
+			// A single trailing argument is shorthand for --query. Never consume
+			// unknown flags or override an explicitly supplied (even empty) query.
+			if i == len(args)-1 && !queryProvided && len(rest) == 0 && !strings.HasPrefix(args[i], "-") {
+				flags.Query = args[i]
+			} else {
+				rest = append(rest, args[i])
+			}
 		}
 	}
 	return flags, rest, nil

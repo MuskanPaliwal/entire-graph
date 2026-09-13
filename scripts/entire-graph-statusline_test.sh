@@ -202,7 +202,7 @@ BIG_EXPLORE=$(awk 'BEGIN{ while (n++ < 400) printf "x" }')
 # --- integration: a graph-first session ------------------------------------------------------
 T=$WORK/graphfirst.jsonl
 {
-	tool_use Bash g1 '{"command":"entire graph search --repo . --query \"login bug\""}'
+	tool_use Bash g1 '{"command":"entire graph query --repo . --query \"login bug\""}'
 	tool_result g1 "{\\\"results\\\":[{\\\"file_path\\\":\\\"$REPO/file0.go\\\"}]}"
 	tool_use Bash g2 '{"command":"entire graph search --repo . --query \"session token\""}'
 	tool_result g2 "{\\\"results\\\":[{\\\"file_path\\\":\\\"$REPO/file1.go\\\"}]}"
@@ -218,7 +218,8 @@ T=$WORK/graphfirst.jsonl
 OUT=$(run s-graphfirst "$T" "$REPO")
 assert_has 'graph-first session: badge' '[GRAPH]' "$OUT"
 assert_has 'graph-first session: saved'  'saved'  "$OUT"
-assert_has 'graph-first session: search verb split' '2 search' "$OUT"
+assert_has 'graph-first session: query verb split' '1 query' "$OUT"
+assert_has 'graph-first session: search verb split' '1 search' "$OUT"
 assert_has 'graph-first session: impact verb split' '1 impact' "$OUT"
 assert_has 'graph-first session: graph-first tick' 'graph-first ✓' "$OUT"
 assert_has 'graph-first session: locate share' '60% of locates' "$OUT"

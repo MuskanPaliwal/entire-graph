@@ -196,7 +196,7 @@ Each layer has an observable check:
    code-location task. The client-side signal depends on the client; behavior
    is checked in the next step.
 4. **Adoption.** The session's first code-locating tool call is
-   `entire graph search ...`, before broad grep, find, or whole-file reading. If
+   `entire graph query ...`, before broad grep, find, or whole-file reading. If
    the agent starts elsewhere, the guide may not have loaded or may not have
    been followed. Check the activation files and the client's instruction view.
 5. **Grounding.** The answer cites files and lines opened after the graph query,

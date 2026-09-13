@@ -52,7 +52,7 @@ the cache directory costs a rebuild, nothing else.
 
 The cache root is resolved in order: `--cache-dir`, then
 `ENTIRE_PLUGIN_DATA_DIR`, then the per-user cache directory (`entire-graph`
-under the OS user cache path). The per-user fallback applies to `search`,
+under the OS user cache path). The per-user fallback applies to `query`,
 `neighbors`, `impact`, `index`, `snapshot`, `symbols`, and `edges`. `def` and
 `explain` stop at `ENTIRE_PLUGIN_DATA_DIR`; with neither the flag nor the
 variable set they rebuild on every run. One directory is shared by every
@@ -78,7 +78,7 @@ through the same writable namespace.
 
 ### Two cache families
 
-- The **search snapshot cache** backs `search`, `neighbors`, `impact`, and
+- The **search snapshot cache** backs `query`, `neighbors`, `impact`, and
   `index`. It caches committed-tree (`--head`) queries; working-tree queries
   always bypass it.
 - The **provider records cache** backs the bulk streams (`snapshot`,
@@ -123,7 +123,7 @@ is the superseded clean-tree reuse design.
 it was written. It warms exactly one cache variant: later queries reuse it
 only when they run with `--head` and matching profile, cache directory,
 ordered ignore/include inputs, and unchanged `.graphignore`. Two defaults make
-this easy to get wrong: `index` defaults to `--profile full` while `search`
+this easy to get wrong: `index` defaults to `--profile full` while `query`
 defaults to `--profile fast`, and `index` cannot warm the default
 working-tree path at all. To prewarm for the installed agent guide's
 committed-tree queries, `index`'s default profile is the right one, but the
@@ -134,14 +134,14 @@ graph for human review.
 
 ### Observing cache state
 
-- `search` (default JSON): `stats.index_cache_hit`.
+- `query` (default JSON): `stats.index_cache_hit`.
 - `impact --format text` and `neighbors --format text`: leading
   `Index: cache-hit`/`cache-miss` line.
-- `search --format agent` and `neighbors --format agent`: normally the same
+- `query --format agent` and `neighbors --format agent`: normally the same
   `Index:` header. Under a tight byte budget it compacts to `I:hit`/`I:miss`;
   an extremely small budget can omit the telemetry.
-- JSON output from `search`, `impact`, and `neighbors` includes cache fields.
-- `search --format text` and `explain`: no cache state is reported.
+- JSON output from `query`, `impact`, and `neighbors` includes cache fields.
+- `query --format text` and `explain`: no cache state is reported.
 - `def`: JSON field only.
 
 ## Updating and troubleshooting
