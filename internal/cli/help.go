@@ -108,7 +108,7 @@ var commandDocs = []commandDoc{
 		group:   groupSetup,
 		summary: "Build/warm a committed-tree cache variant for matching queries",
 		usage:   []string{"entire graph index --repo . [--head] [--force] [--profile syntax-only|fast|full] [--cache-dir path] [--report GRAPH_REPORT.md] [--format text|json|auto]"},
-		long: "Prebuilds a durable, complete committed-tree snapshot. Later --head searches/neighbors can reuse it when caching is enabled and they resolve the same cache directory, profile, and ordered ignore/include inputs, with unchanged input-file contents and .graphignore. index defaults to full while search defaults to fast, so a default index does not warm a default search --head. Re-running index refreshes that cache variant: an unchanged tree hits, while a changed tree rebuilds. Pass --force to rebuild and overwrite the entry even when the tree is unchanged.\n\n" +
+		long: "Prebuilds a durable, complete committed-tree snapshot. Later --head searches/neighbors can reuse it when caching is enabled and they resolve the same cache directory, profile, and ordered ignore/include inputs, with unchanged input-file contents and .graphignore. index defaults to full while query defaults to fast, so a default index does not warm a default query --head. Re-running index refreshes that cache variant: an unchanged tree hits, while a changed tree rebuilds. Pass --force to rebuild and overwrite the entry even when the tree is unchanged.\n\n" +
 			"At a terminal it draws a live progress bar on stderr (only when it actually builds — a cache hit returns instantly) and prints a readable summary; piped or with --format json it emits the schema-versioned JSON summary that agents and CI consume. --report writes a human-readable GRAPH_REPORT.md rendered from the snapshot, so the same tree always renders the same bytes. The cache defaults to the platform per-user cache dir (macOS ~/Library/Caches/entire-graph; XDG_CACHE_HOME or ~/.cache elsewhere); --cache-dir and ENTIRE_PLUGIN_DATA_DIR override it.\n\n" +
 			"A repo-root .graphignore (gitignore syntax) is honored by every graph command, on top of .gitignore. Use it for tracked-but-vendored/generated sources — e.g. tree-sitter parser.c blobs — that otherwise surface as E_FILE_TOO_LARGE/E_PARSE_ERROR partial failures and a \"degraded\" completeness. Oversized/minified skips also no longer count toward \"degraded\" on their own.",
 		flags: []flagDoc{
@@ -140,17 +140,21 @@ var commandDocs = []commandDoc{
 	},
 
 	// ── Inspect the graph ────────────────────────────────────────────────
+	{name: "search", aliasOf: "query", hidden: true},
 	{
-		name:    "search",
+		name:    "query",
 		group:   groupInspect,
 		summary: "Find the code for a task from a plain-language query (start here)",
-		usage:   []string{`entire graph search --query "issue or concept" --repo . [--top-k 10] [--format text|json|ndjson|agent] [--head] [--profile fast|full] [--deep]`},
+		usage: []string{
+			`entire graph query --query "issue or concept" --repo . [--top-k 10] [--format text|json|ndjson|agent] [--head] [--profile fast|full] [--deep]`,
+			`entire graph query [flags] "issue or concept"`,
+		},
 		long: "Ranked source regions for a plain-language description, with source and file:line inline, budgeted to drop straight into context. This is the first move for almost every locate task.\n\n" +
-			"By default search returns: ranked candidate fix sites (top hits as full function bodies), RELATED SITES, the COVERING TEST plus other tests over the same code (ALSO COVERING), SAME-CONCEPT LITERAL (every place the concept is named, tagged EDIT/CONSUMER/DOC), a VERIFY line (the narrowest test command for the file), and a CLOSED-SET WARNING when a switch over a sealed set would fail at runtime. The three reference blocks (container map, signature types, declaration card) are OFF by default because they cost turns in agent sessions; --reference-blocks all turns them on for interactive reading.\n\n" +
+			"By default query returns: ranked candidate fix sites (top hits as full function bodies), RELATED SITES, the COVERING TEST plus other tests over the same code (ALSO COVERING), SAME-CONCEPT LITERAL (every place the concept is named, tagged EDIT/CONSUMER/DOC), a VERIFY line (the narrowest test command for the file), and a CLOSED-SET WARNING when a switch over a sealed set would fail at runtime. The three reference blocks (container map, signature types, declaration card) are OFF by default because they cost turns in agent sessions; --reference-blocks all turns them on for interactive reading.\n\n" +
 			"--top-k only changes how many results come back; --deep additionally runs the exhaustive sparse (BM25) pass and fuses it with the semantic ranking (slower, reads every eligible file).\n\n" +
 			"Ranking returns one region per unit, which is right for code and wrong for whole prose documents: one markdown document can hold the answer across several distant regions. So for prose the unit is the SECTION, not the file — a document's headed sections are ranked against every other section on their own scores, exactly as independent files would be (--document-resolution ranks a document as one unit instead). Separately, and on prose of any shape including headed documents, when fewer distinct units match than --top-k asked for, the spare slots are spent returning finer regions of the same document as results of their own (multi-resolution retrieval) — strictly additive, so it never displaces a unit and never breaches --max-context-bytes. --single-resolution turns that off. The two stack: a headed document can be ranked by section AND have spare slots filled with promoted passages, so a prose payload may carry both.",
 		flags: []flagDoc{
-			{name: "--query", arg: "text", desc: "The task or bug in one plain sentence (required)"},
+			{name: "--query", arg: "text", desc: "The task or bug in one plain sentence; alternatively supply one final argument"},
 			{name: "--repo", arg: "path", desc: "Repository to search (default: current repo)"},
 			{name: "--top-k", arg: "n", def: "10", desc: "Number of results to return"},
 			{name: "--format", arg: "text|json|ndjson|agent", def: "json", desc: "Output format; text is tiered for reading, agent is compact"},
@@ -167,8 +171,9 @@ var commandDocs = []commandDoc{
 			{name: "--no-cache", desc: "Disable the committed-tree cache"},
 		},
 		examples: []string{
-			`entire graph search --repo . --query "token refresh returns 401" --format text --top-k 8`,
-			`entire graph search --repo . --query "csv export ordering" --profile full`,
+			`entire graph query --repo . --format text "token refresh returns 401"`,
+			`entire graph query --repo . --query "token refresh returns 401" --format text --top-k 8`,
+			`entire graph query --repo . --query "csv export ordering" --profile full`,
 		},
 	},
 	{
@@ -275,7 +280,7 @@ var commandDocs = []commandDoc{
 		group:    groupInspect,
 		summary:  "Stream every symbol definition (bulk NDJSON)",
 		usage:    []string{"entire graph symbols --repo . --format ndjson [--worktree]"},
-		long:     "A bulk NDJSON stream of every symbol record (stable compound-v1 ID, kind, qualified name, source range, signature, language, container). There is no name argument — grep the stream client-side, or prefer search/neighbors for a single lookup. The trailing summary record carries aggregate stats and completeness.",
+		long:     "A bulk NDJSON stream of every symbol record (stable compound-v1 ID, kind, qualified name, source range, signature, language, container). There is no name argument — grep the stream client-side, or prefer query/neighbors for a single lookup. The trailing summary record carries aggregate stats and completeness.",
 		flags:    providerFlagDocs,
 		examples: []string{"entire graph symbols --repo . --format ndjson"},
 	},
@@ -406,7 +411,7 @@ var commandDocs = []commandDoc{
 		usage:   []string{"entire graph stats [--repo .] [--since 30d|7d|all] [--verbose] [--format text|json] [--sessions-dir path|--transcript path]"},
 		long: "A local, read-only report for humans (agents should not run it as part of a task). It reads the coding-agent session transcripts already on disk (~/.claude/projects/<path-slug>/*.jsonl).\n\n" +
 			"By DEFAULT it prints one line: the ESTIMATED tokens saved, marked with ~ because it is a model, not a measurement. --verbose restores the full report — graph calls per verb vs exploration calls, bytes each pulled into context, billed tokens, a graph-first rate, the measured per-call costs, and the model's assumption printed with the number.\n\n" +
-			"The estimate credits each graph locate call (search/neighbors/impact) with the ONE exploration call it displaced, priced from that session's own measured bytes per graph call and bytes per exploration call. A session whose graph calls returned more per call than the exploration they displaced correctly contributes nothing.\n\n" +
+			"The estimate credits each graph locate call (query/neighbors/impact) with the ONE exploration call it displaced, priced from that session's own measured bytes per graph call and bytes per exploration call. A session whose graph calls returned more per call than the exploration they displaced correctly contributes nothing.\n\n" +
 			"--transcript narrows the whole report to ONE session (that transcript plus its subagent transcripts) instead of a whole project directory. Summaries of unchanged transcripts are memoised under the cache directory, keyed on file identity; --no-cache turns that off.",
 		flags: []flagDoc{
 			{name: "--repo", arg: "path", desc: "Repository whose sessions to report on (default: current repo)"},
@@ -443,7 +448,7 @@ var commandDocs = []commandDoc{
 		},
 		examples: []string{
 			"entire graph doctor --json",
-			`entire graph doctor --assert "search --profile full --top-k 10 --format text"`,
+			`entire graph doctor --assert "query --profile full --top-k 10 --format text"`,
 		},
 	},
 	{

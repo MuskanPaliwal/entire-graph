@@ -20,18 +20,20 @@ When running [LoCoMo](https://github.com/snap-research/locomo) against competito
 we measured the top score of 94.74% for Entire Graph. We also observed token savings
 up to 71% depending on the coding scenario. As always, your mileage may vary.
 
-## Setup
+## Features
 
-[Entire CLI](https://github.com/entireio/cli#quick-start) is required. Then setup happens once per repository:
-
-```sh
-entire graph init-agents --repo .
-```
-
-If the plugin is not installed yet, the Entire CLI offers to install it on the
-spot. After that, the interface is your coding agent: you ask a code question in
-plain language, the agent runs graph queries, reads the code the graph points
-at, and answers with citations. A captured example follows.
+- Ranked code search from plain-language task descriptions, combining lexical matches across source bodies, identifiers, signatures, and paths with graph relationships.
+- Agent-ready results with source snippets, file:line locations, configurable context budgets, ranking explanations, and suggested verification commands.
+- Semantic parsing for 36 languages, including Go, Python, JavaScript, TypeScript, Java, Rust, C, C++, C#, Ruby, PHP, Swift, and Kotlin, plus inventory support for 149 additional language and filetype names. entire graph capabilities --json reports the installed build’s coverage.
+- Definition lookup and focused relationship queries for callers, callees, inheritance, type usage, field access, and supported framework routes.
+- Change-impact reports combining direct and transitive callers, callees, type consumers, data-flow relationships, same-container symbols, and files that historically change together.
+- Entity-level semantic diffs between Git revisions, including added, removed, renamed, signature-changed, and body-changed symbols, with heuristic dependent counts.
+- Commit and Entire checkpoint analysis for reviewing changes in their repository context.
+- Working-tree queries that include uncommitted edits by default, with explicit committed-tree queries and reusable caches for matching repository states and options.
+- Full graph export through versioned NDJSON snapshots, stable symbol identifiers, a compact NDJSON format, and experimental SCIP export.
+- Per-repository agent activation, which installs graph-first guidance in AGENTS.md and CLAUDE.md.
+- Machine-readable coverage, exclusions, warnings, and partial failures, with relation confidence and resolution metadata.
+- Local analysis with no network requests, model calls, API keys, telemetry, or runtime grammar downloads.
 
 ## Benchmarks
 
@@ -64,18 +66,10 @@ Entire Graph requires Entire CLI 0.10.0 or later and Git 2.36 or later on
 `PATH`. Git 2.36 added the single-session object protocol Entire Graph uses to
 inspect an object's type before reading its contents. The commands below are
 the official ones from the [Entire CLI installation
-guide](https://docs.entire.io/installation), which also covers Windows and
+guide](https://docs.entire.io/installation), which also covers Homebrew, Windows and
 other channels.
 
-On macOS:
-
-```sh
-brew tap entireio/tap
-brew trust entireio/tap
-brew install --cask entire
-```
-
-On Linux:
+On macOS or Linux:
 
 ```sh
 curl -fsSL https://entire.io/install.sh | bash
@@ -90,8 +84,6 @@ entire graph version
 
 `entire graph version` printing a release tag confirms that a versioned build
 is active.
-The local install helper reports the source checkout's Git description; a raw
-unversioned build prints `dev` (see [operations](docs/operations.md)).
 
 ## Activate it for your agent
 
@@ -113,14 +105,31 @@ The command creates or updates these files:
 Review the three files, then commit them together when the instructions should
 apply to your team.
 
-Finally, start a fresh agent session in the repository. A session that was open
-during activation has not seen the new instructions.
+After that, the interface is your coding agent: start it with the new instructions,
+then you ask a code question in plain language, the agent runs graph queries,
+reads the code the graph points at, and answers with citations. A captured example
+is shown further below.
 
-## Ask your first question
+## What to ask
 
-Ask the agent a repository question in your own words. The transcript below is
-a real captured session, recorded with pinned inputs: the installed Entire
-Graph release, a fresh clone of `gorilla/mux` at commit `db9d1d0` with
+Prompts are the interface. The commands are what the agent runs underneath;
+you can also invoke them directly for manual inspection, debugging, or
+automation. See the [command reference](docs/commands.md).
+
+| Goal | Example prompt | Graph command |
+| --- | --- | --- |
+| Find the implementation | Find where request routing is implemented. | `query` |
+| Read one definition | Show the definition of `ResolveRoute`. | `def` |
+| Trace callers or callees | What calls `ResolveRoute`? | `neighbors` |
+| Check the blast radius | What would changing `ResolveRoute` affect? | `impact` |
+| Review a branch | Summarize the semantic changes from `main` to `HEAD`. | `diff` |
+| Export the full graph | Export the repository graph as NDJSON. | `snapshot` |
+| Inspect indexing health | Show parser coverage and affected files, including healthy results. | `health` |
+
+## Example Session
+
+The transcript below is a real captured session, recorded with pinned inputs: the
+installed Entire Graph release, a fresh clone of `gorilla/mux` at commit `db9d1d0` with
 no prior agent instructions, activation files committed, and Claude Code
 2.1.233 (model Claude Fable 5) as the client. The prompt:
 
@@ -128,21 +137,20 @@ no prior agent instructions, activation files committed, and Claude Code
 > repository, what calls it, and what is most likely to be affected if its
 > behavior changes. Cite the relevant source.
 
-The session's tool calls, in order (long commands wrapped for width, the last
-one truncated):
+The session's tool calls, in order (command syntax updated to the current
+interface, the last command truncated):
 
 ```text
-Bash: entire graph search --repo . --profile full --query "route matching
-      implementation for incoming request paths"
-Bash: entire graph impact --repo . --symbol Route.Match
-Bash: entire graph impact --repo . --symbol Router.Match
+Bash: entire graph query --profile full "route matching implementation for incoming request paths"
+Bash: entire graph impact --symbol Route.Match
+Bash: entire graph impact --symbol Router.Match
 Bash: sed -n 145,230p mux.go
 Bash: sed -n 40,120p route.go
 Bash: grep -n "func.*Match\|matcher\b" route.go regexp.go | head -40
 Bash: sed -n 185,225p regexp.go; grep -n "\.Match(" mux.go route.go middleware.go ...
 ```
 
-The first call is a graph search. That is the activation instructions at
+The first call is a graph query. That is the activation instructions at
 work: Claude Code loads `CLAUDE.md` at session start and resolves its import
 of the guide, so the agent reached for the graph before any grep.
 Search returns ranked JSON evidence; the top hit for this query was
@@ -182,31 +190,15 @@ outputs, and the final answer verbatim.
 Each layer of the setup has its own success signal. Installation: both
 `entire version` and `entire graph version` succeed. Activation: the three
 files exist with intact markers. Adoption: in a fresh session, the first
-code-locating call is `entire graph search`. If the agent begins with broad
+code-locating call is `entire graph query`. If the agent begins with broad
 grep or whole-file exploration, the guide may not have loaded or may not have
 been followed. Check the activation files and the client's instruction view;
 see [agent activation](docs/agents.md). Grounding: the answer cites files and
 lines the agent actually opened.
 
-## What to ask
-
-Prompts are the interface. The commands are what the agent runs underneath;
-you can also invoke them directly for manual inspection, debugging, or
-automation. See the [command reference](docs/commands.md).
-
-| Goal | Example prompt | Graph command |
-| --- | --- | --- |
-| Find the implementation | Find where request routing is implemented. | `search` |
-| Read one definition | Show the definition of `ResolveRoute`. | `def` |
-| Trace callers or callees | What calls `ResolveRoute`? | `neighbors` |
-| Check the blast radius | What would changing `ResolveRoute` affect? | `impact` |
-| Review a branch | Summarize the semantic changes from `main` to `HEAD`. | `diff` |
-| Export the full graph | Export the repository graph as NDJSON. | `snapshot` |
-| Inspect indexing health | Show parser coverage and affected files, including healthy results. | `health` |
-
 ## Working tree and cache
 
-The interactive query family (`search`, `def`, `explain`, `neighbors`, and
+The interactive query family (`query`, `def`, `explain`, `neighbors`, and
 `impact`) reads the working tree by default, so agents see uncommitted edits.
 Add `--head` to ask about the committed tree instead. Bulk streams
 (`snapshot`, `symbols`, `edges`) and ref-based analysis (`diff`, `commit`)
@@ -218,14 +210,14 @@ entries. A `--head` query can reuse a snapshot keyed to the committed tree and
 query options; changing `.graphignore` selects a different committed-tree
 entry.
 
-Cache state is visible where the format reports it: the default `search` JSON
+Cache state is visible where the format reports it: the default `query` JSON
 carries `stats.index_cache_hit`, and `impact`/`neighbors` text output opens
 with an `Index: cache-hit`/`cache-miss` line. Default working-tree queries
-report a miss; matching `--head` queries may hit. `search --format text` does
+report a miss; matching `--head` queries may hit. `query --format text` does
 not report cache state.
 
 `entire graph index` prewarms committed-tree (`--head`) queries only, and
-defaults to profile `full` while plain `search` defaults to `fast`. A default
+defaults to profile `full` while plain `query` defaults to `fast`. A default
 `index` run therefore does not warm the default working-tree path. One caveat
 inside the query family: `def` and `explain` only cache when `--cache-dir` or
 `ENTIRE_PLUGIN_DATA_DIR` is set, unlike the other query commands. Cache

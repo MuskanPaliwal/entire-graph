@@ -33,7 +33,7 @@ agent reading this file. Use the graph to narrow exploration without trading awa
 
 Your FIRST action on any task that requires finding code must be ONE search:
 
-    entire graph search --repo . --profile full --query "<the task or bug in one sentence>"
+    entire graph query --repo . --profile full --query "<the task or bug in one sentence>"
 
 Then open the top hit's file with your file-read tool (pass a line range around the reported
 line), inspect enough surrounding behavior to justify the change, and make the smallest complete
@@ -66,7 +66,7 @@ by eliminating exploration; when there is nothing to explore, skip it.
 
 ## Reference
 
-    locate  ->  entire graph search --repo . --profile full --query "..."
+    locate  ->  entire graph query --repo . --profile full --query "..."
     impact  ->  entire graph impact --repo . --symbol X   (one shot: callers, callees, type consumers, data flow, co-change, siblings)
     callers ->  entire graph neighbors --repo . --symbol X --relation CALLS --direction in
     change  ->  entire graph diff --base A --head B --json

@@ -169,7 +169,7 @@ a FILENAME only for that reason: a directory named `credentials/` is neither
 excluded by it nor re-admitted when the repository's own `.gitignore` or
 `.graphignore` excludes it.
 
-Both persistent caches (`index`/`search` snapshots and the streamed record
+Both persistent caches (`index`/`query` snapshots and the streamed record
 caches) key on a digest of the effective built-in rules, so a cache entry warmed
 by a build with a different policy is not reachable — an entry written before
 these rules existed misses instead of re-emitting the paths it named.
@@ -225,10 +225,10 @@ command does so.
 
 ## What it executes
 
-- Graph queries (`search`, `def`, `explain`, `neighbors`, `impact`) and
+- Graph queries (`query`, `def`, `explain`, `neighbors`, `impact`) and
   streams run `git` subprocesses and parse files. They do not execute
   repository code.
-- `search` **suggests** a `VERIFY:` command derived from repository contents
+- `query` **suggests** a `VERIFY:` command derived from repository contents
   (test names, build files). It does not run it. Anything that later runs
   that command is executing text influenced by repository contents. Read the
   command first in repositories you do not trust.
@@ -258,7 +258,7 @@ What that does **not** give you:
 - It is not authentication. A forged record becomes detectable, not
   impossible; nothing stops a reader that ignores indentation from acting on an
   indented line.
-- The grammar is a closed set covering the records the `search` renderers emit.
+- The grammar is a closed set covering the records the `query` renderers emit.
   `def`, `impact`, `neighbors` and `callsite` print source through their own
   paths and are not covered.
 - `--presearch` echoes a caller-supplied file verbatim and is not inspected.
@@ -288,7 +288,7 @@ machine-readable partial failures rather than disappearing silently.
 whoever can commit to it decides part of what the graph sees. One committed line
 naming a tracked source file removes that file from every answer.
 
-`search` therefore reports what those rules removed rather than presenting the
+`query` therefore reports what those rules removed rather than presenting the
 surviving corpus as the whole of it. When repository-controlled rules exclude
 files Git itself lists, the response carries `repo_ignored` (the count, the ignore
 files responsible, and up to ten of the excluded paths),
@@ -312,7 +312,7 @@ understated.
 This is disclosure, not prevention. It tells you that files were removed and
 which ones; it does not tell you whether one of them was the answer to your
 query, and deciding that still means reading the file. Commands other than
-`search` do not yet carry the disclosure.
+`query` do not yet carry the disclosure.
 
 ## Command-family tree semantics
 
