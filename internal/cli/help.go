@@ -89,7 +89,7 @@ var commandDocs = []commandDoc{
 		group:   groupSetup,
 		summary: "Install the coding-agent guide into AGENTS.md/CLAUDE.md",
 		usage:   []string{"entire graph init-agents [--repo path]"},
-		long:    "Writes the operating guide into a project's AGENTS.md and CLAUDE.md so any coding agent working in the repo knows to locate code with the graph before broad grep/read exploration.",
+		long:    "Writes the operating guide into a project's AGENTS.md and CLAUDE.md using generation-time Graph/Brain routing. One shared guide replaces legacy workflows.",
 		flags: []flagDoc{
 			{name: "--repo", arg: "path", desc: "Repository to install into (default: current repo)"},
 		},
@@ -99,8 +99,9 @@ var commandDocs = []commandDoc{
 		name:     "agent-guide",
 		group:    groupSetup,
 		summary:  "Print the coding-agent operating guide",
-		usage:    []string{"entire graph agent-guide"},
-		long:     "Prints the resolution-first guide (graph retrieval, focused source inspection, verification) to stdout without writing any files. Use init-agents to install it into a project instead.",
+		usage:    []string{"entire graph agent-guide [--repo path]"},
+		long:     "Previews the same repository-specific workflow init-agents would install, without writing files. Outside a repository, prints standalone Graph reference guidance. Use init-agents to install it into a project instead.",
+		flags:    []flagDoc{{name: "--repo", arg: "path", desc: "Project root (default: host repository or nearest repository)"}},
 		examples: []string{"entire graph agent-guide"},
 	},
 	{
