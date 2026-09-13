@@ -269,3 +269,22 @@ not the absence of uncommitted source changes. The schema and both cache-family
 versions invalidate earlier status calculations, including local `dev` builds.
 Symbol IDs are unchanged. Caches use the platform per-user directory unless
 `--cache-dir` or `ENTIRE_PLUGIN_DATA_DIR` overrides it.
+
+### Downstream compatibility check
+
+Run `mise exec -- python3 scripts/test-brain-health.py /path/to/entire-brain`
+against the Brain version intended for deployment. It builds this Graph checkout,
+generates four synthetic snapshots, and uses a Go test overlay to exercise Brain's
+actual stream reader without editing the consumer checkout. The check covers
+schema acceptance, summary merging, retained health metadata and diagnostic
+code/detail, re-serialized snapshots, and completeness-to-trust mapping.
+It is a reader compatibility check, not a full SQLite indexing or deployment test.
+
+Schema 1.3 advertises the optional fields; it does not negotiate completeness
+policy. Brain maps provider `ok`/`degraded`/`unsafe` to `trusted`/`partial`/`low`,
+so the requested 5% boundary changes those trust labels. This is intentional.
+Brain versions that only declare an older supported minor accept 1.3 with a
+newer-minor warning; do not suppress that warning without consumer-side evidence.
+Brain also has a separately computed completeness/freshness axis: its legacy
+10% parse-error rule is not changed by this Graph release. Consumers requiring
+the same policy on that axis need a separate coordinated update.
