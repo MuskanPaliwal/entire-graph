@@ -7,7 +7,7 @@ Date: 2026-07-03
 
 `entire-graph` emits a semantic index consumed by downstream tools (notably
 `entire-brain`). The wire format carries `schema_version` in `major.minor` form.
-The provider currently advertises **`1.2`** (`internal/sem/provider.go`
+The provider currently advertises **`1.3`** (`internal/sem/provider.go`
 `SchemaVersion`), where the `1.1` minor adds *optional, additive* relation fields
 that tolerant readers ignore. A compatibility policy already exists in the
 [semantic provider requirements](../semantic-provider-requirements.md), but it
@@ -19,7 +19,7 @@ against it and so future changes have clear, non-breaking rules.
 
 ## Decision
 
-**GA ships on schema `1.x`, with `1.2` as the current minor. `1.x` is the frozen,
+**GA ships on schema `1.x`, with `1.3` as the current minor. `1.x` is the frozen,
 stable GA contract.** We do NOT roll back to `1.0`; `1.1` is strictly additive
 over `1.0` and every `1.0` reader already tolerates it.
 
@@ -145,3 +145,14 @@ the same ceiling on encoding and decoding. Older readers can still reject summar
 records larger than 16 MiB; upgrade readers before exchanging these larger
 artifacts. The identity revision describes parser identity rules, not compact
 reader compatibility, and does not remove this reader upgrade requirement.
+
+### Source-file health accounting (schema 1.3)
+
+Schema 1.3 adds optional `completeness.health` counts, percentages, threshold,
+status and language totals, plus an optional partial-failure `language` for
+source classification when no file record is available. The existing completeness status still describes
+indexing usability; its heuristic now uses unique eligible source files and an
+inclusive 5% degradation threshold, retaining stronger safeguards. Diagnostic
+arrays remain intact. Both cache families are versioned to discard obsolete
+calculations. The persisted Result shape and symbol identity revision are
+unchanged. See [operations](../operations.md#graph-health) for denominator policy.

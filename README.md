@@ -202,6 +202,7 @@ automation. See the [command reference](docs/commands.md).
 | Check the blast radius | What would changing `ResolveRoute` affect? | `impact` |
 | Review a branch | Summarize the semantic changes from `main` to `HEAD`. | `diff` |
 | Export the full graph | Export the repository graph as NDJSON. | `snapshot` |
+| Inspect indexing health | Show parser coverage and affected files, including healthy results. | `health` |
 
 ## Working tree and cache
 
@@ -230,6 +231,28 @@ inside the query family: `def` and `explain` only cache when `--cache-dir` or
 `ENTIRE_PLUGIN_DATA_DIR` is set, unlike the other query commands. Cache
 locations, key inputs, and prewarming are documented in
 [operations](docs/operations.md#cache).
+
+## Indexing health
+
+```sh
+entire graph health
+entire graph health --repo . --json
+entire graph health --refresh
+```
+
+Health defaults to committed `HEAD` and profile `full`. It reuses the matching
+index or announces and builds one; `--refresh` forces a rebuild. The report
+includes revision, profile, cache freshness, source totals, unique flagged
+files, language/category breakdowns, diagnostic details and intentional skips.
+`doctor` remains unchanged.
+
+The degradation threshold is **5% of eligible source files**, inclusive.
+Multiple diagnostics for a file count once. Documentation, configuration and
+data do not dilute the denominator; minified/oversized skips are excluded from
+the numerator. Existing unsafe and empty/unusable-graph safeguards still apply.
+Diagnostics remain available below the threshold, including query warnings.
+These are parser limitations, not a verdict that the source code is invalid.
+See [health accounting and cache behavior](docs/operations.md#graph-health).
 
 ## Limits
 

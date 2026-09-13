@@ -33,12 +33,13 @@ import (
 )
 
 const (
-	// SchemaVersion is bumped to 1.2 for optional parser identity metadata.
+	// SchemaVersion 1.3 adds optional source-file health accounting; 1.2 added
+	// optional parser identity metadata.
 	// Schema 1.1 added the snapshot fields introduced
 	// alongside boundary source locations (the `external` flag on external records
 	// and the per-symbol source-location fields). The shape is backward compatible
 	// for tolerant readers; the bump lets consumers detect the new fields.
-	SchemaVersion         = "1.2"
+	SchemaVersion         = "1.3"
 	ProviderName          = "entire-graph"
 	StableSymbolIDVersion = "compound-v1"
 	// IdentityRevision is a global, opaque revision of parser identity rules across
@@ -205,6 +206,7 @@ var ooRelationSupport = map[string][]string{
 var schemaFeatures = []string{
 	"boundary_source_locations",
 	"completeness_breakdown",
+	"completeness_health",
 	"language_versions",
 	"relation_evidence",
 	"relation_evidence_dropped",
@@ -264,6 +266,7 @@ type ProfileLimits struct {
 type CompletenessReport struct {
 	Languages map[string]LanguageCompleteness `json:"languages"`
 	Relations map[string]int                  `json:"relations"`
+	Health    GraphHealth                     `json:"health,omitzero"`
 }
 
 type LanguageCompleteness struct {
@@ -292,6 +295,7 @@ type PartialFailure struct {
 	Code                 string `json:"code"`
 	Severity             string `json:"severity"`
 	FilePath             string `json:"file_path,omitempty"`
+	Language             string `json:"language,omitempty"`
 	EffectOnCompleteness string `json:"effect_on_semantic_completeness"`
 	Detail               string `json:"detail,omitempty"`
 }
@@ -1527,15 +1531,16 @@ func streamSnapshotWithWorkerCount(ctx context.Context, repo, providerVersion st
 		Warnings:        warnings,
 		PartialFailures: failures,
 		Stats: ProviderStats{
-			Files:             len(files),
-			ParsedFiles:       parsedFileCount,
-			Symbols:           symbolCount,
-			Relations:         relationCount,
-			PartialFailures:   len(failures),
-			CompletenessLevel: completenessLevel(completenessFailureCount(failures), len(files), parsedFileCount, symbolCount),
+			Files:           len(files),
+			ParsedFiles:     parsedFileCount,
+			Symbols:         symbolCount,
+			Relations:       relationCount,
+			PartialFailures: len(failures),
 		},
 		Completeness: CompletenessReport{Languages: completenessLangs, Relations: relationsByType},
 	}
+	summary.Completeness.Health = calculateGraphHealth(files, failures, summary.Stats)
+	summary.Stats.CompletenessLevel = summary.Completeness.Health.Status
 	// Progress callbacks and the last external record can cancel as well.
 	// Never publish a success summary for a canceled snapshot.
 	if err := ctx.Err(); err != nil {
@@ -28375,20 +28380,8 @@ var intentionalSkipFailureCodes = map[string]bool{
 	"E_MINIFIED":       true,
 }
 
-// completenessFailureCount counts only the partial failures that reflect a real
-// gap in understanding code the graph attempted — the input to completenessLevel.
-// Intentional skips (see intentionalSkipFailureCodes) are excluded.
-func completenessFailureCount(failures []PartialFailure) int {
-	n := 0
-	for _, failure := range failures {
-		if intentionalSkipFailureCodes[failure.Code] {
-			continue
-		}
-		n++
-	}
-	return n
-}
-
+// completenessLevel takes unique flagged source files and eligible source files.
+// It also serves the recorded-file safeguards with a zero failure count.
 func completenessLevel(failures, files, parsedFiles, symbols int) string {
 	switch {
 	case files == 0:
@@ -28418,10 +28411,10 @@ func completenessLevel(failures, files, parsedFiles, symbols int) string {
 		// level stayed quiet about 40% of the code. It sits AFTER the failure
 		// ratio so it can never soften an "unsafe".
 		return "degraded"
-	case failures == 0:
-		return "ok"
-	default:
+	case failures*100 >= files*DegradationThresholdPercent:
 		return "degraded"
+	default:
+		return "ok"
 	}
 }
 

@@ -178,7 +178,7 @@ export function handleRoute() {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if snapshot.Header.SchemaVersion != "1.2" {
+	if snapshot.Header.SchemaVersion != "1.3" {
 		t.Fatalf("schema version = %q", snapshot.Header.SchemaVersion)
 	}
 	if snapshot.Header.Provider != ProviderName {
