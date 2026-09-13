@@ -63,6 +63,26 @@ const intro = "entire graph adds a deterministic, no-egress code graph to Entire
 // commandDocs is the ordered registry. Every command dispatched in root.go's Run
 // switch has an entry here (TestRegistryMatchesDispatch enforces the parity).
 var commandDocs = []commandDoc{
+	{
+		name:    "health",
+		group:   groupMeta,
+		summary: "Report committed-tree indexing health, including healthy results",
+		usage:   []string{"entire graph health [--repo path] [--json] [--refresh]"},
+		long:    "Reports unique flagged source files, percentages, the inclusive 5% degradation threshold, language and diagnostic breakdowns, affected files and parser diagnostic locations. Documentation, configuration and data do not dilute the source denominator. Intentional skips are listed separately; stronger unsafe and unusable-graph safeguards still apply. Parser limitations do not establish invalid source code.\n\nDefaults to committed HEAD and the full profile. Reuses a matching index or builds one, announcing the build on stderr. --refresh rebuilds and invalidates derived query caches. Older health calculations are invalidated by cache versioning. Matching means the same tree, profile, provider and indexing policy; it does not include uncommitted source edits. doctor remains the provider capability check.",
+		flags: []flagDoc{
+			{name: "--repo", arg: "path", desc: "Repository (default: current repo)"},
+			{name: "--json", desc: "Emit structured health JSON instead of text"},
+			{name: "--refresh", desc: "Rebuild even when a matching index exists"},
+			{name: "--profile", arg: "syntax-only|fast|full", def: "full", desc: "Index profile"},
+			{name: "--cache-dir", arg: "path", desc: "Override the shared index cache directory"},
+			{name: "--format", arg: "text|json|auto", def: "text", desc: "Report format"},
+			{name: "--head", desc: "Accepted for symmetry; health always uses committed HEAD"},
+			{name: "--no-network", desc: "Accepted for symmetry; health is always local-only"},
+			{name: "--ignore-file", arg: "path", desc: "Extra exclude rules (repeatable)"},
+			{name: "--include-file", arg: "path", desc: "Re-include ignored paths (repeatable)"},
+		},
+		examples: []string{"entire graph health", "entire graph health --repo . --json", "entire graph health --refresh"},
+	},
 	// ── Set up your agent ────────────────────────────────────────────────
 	{
 		name:    "init-agents",

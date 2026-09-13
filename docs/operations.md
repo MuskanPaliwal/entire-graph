@@ -207,3 +207,84 @@ precedence and the script writes only the `.sig` file.
 The script does not publish artifacts. The GitHub `release` workflow builds and
 verifies six platform archives. A manual workflow run on a branch only validates
 them; pushing a `v*` tag also publishes the GitHub release and `checksums.txt`.
+## Graph health
+
+`entire graph health` always reports indexing health, including `ok`. The default
+is text; `--json` (or `--format json`) returns structured data. It uses committed
+`HEAD` with the `full` profile. `--profile`, `--cache-dir`, `--ignore-file` and
+`--include-file` select the same cache variants as `index`. A missing index is
+built locally, with a build notice on stderr. `--refresh` rebuilds and invalidates
+derived query entries even when the source tree is unchanged. No source files or
+ignore rules are modified. `doctor` keeps its existing capability-check behavior.
+
+Health is shared by indexes, snapshot summaries and query summaries in
+`completeness.health` (additive schema 1.3). It includes `source_files`,
+`flagged_files`, `flagged_percentage`, `threshold_percentage`,
+`intentional_skipped_files`, `status`, and a per-language breakdown. Existing
+`stats.completeness_level` (index/health: `counts.completeness_level`) agrees with
+that status. Existing fields and full diagnostic arrays remain available.
+
+The percentage is `100 × unique flagged source files / eligible source files`.
+The inclusive degradation threshold is 5%; status comparisons use integer counts
+without rounding. A file with several diagnostic categories or failures in both
+parser phases contributes once. `E_MINIFIED` and `E_FILE_TOO_LARGE` are intentional
+skips, excluded from the numerator and reported separately. Eligible skipped
+files remain in the denominator. Unsupported recognized source and source read
+failures count even when no file record could be emitted.
+An optional diagnostic `language` preserves shebang-based classification when
+an extensionless source file cannot be read in full.
+
+Eligibility is defined centrally in `internal/sem/health.go`: recognized
+programming, template, stylesheet and interface languages count, including
+inventory-only languages and scripts identified by shebang. Documentation,
+configuration and data formats do not count: for example Markdown, JSON, YAML,
+XML, TOML, INI, HCL/Terraform, CUE, Dockerfile, Make and project manifests.
+Unknown file types are not assumed to be source. Source files under documentation
+directories still count. Files excluded by ignore/build policy are outside the
+snapshot scope. Query-selected snapshots calculate the same metric over their
+selected scope, not an unexamined whole repository; a no-hit search may reuse a
+complete cached report, or omit health when no graph was built.
+
+With zero eligible source files, the percentage is explicitly 0 and the threshold
+alone yields `ok`. Stronger guards remain, in their existing order: a majority
+unparsed yields `unsafe`; a parsed graph with zero symbols yields `degraded`;
+otherwise more than 25% flagged yields `unsafe`, and more than 25% unparsed yields
+`degraded`. The existing recorded-file
+guards also apply, including to zero-source scopes. A truly empty scope is `ok`.
+The report's threshold is therefore not the sole reason a status can be degraded.
+
+Meaningful diagnostics are retained below 5%, and relevant query warnings still
+appear. Diagnostics describe parser limitations and incomplete extraction; they
+do not establish that source code is invalid. The health command lists affected
+files, effects, and locations in diagnostic `detail` when the parser supplies
+them (timeouts and read failures may have no line/column). Its JSON additionally
+contains `diagnostic_categories` and `intentional_skips`, without removing the
+original `partial_failures` or `warnings` arrays. Language percentages cover
+eligible source; categories and diagnostic lists also retain non-source failures.
+
+`cache_freshness` is `matching_index`, `built`, or `rebuilt`; `index_cache_hit`,
+`commit`, `tree`, `profile` and `index_latency_ms` provide the underlying evidence.
+Freshness means a matching committed tree, provider, profile and indexing policy,
+not the absence of uncommitted source changes. The schema and both cache-family
+versions invalidate earlier status calculations, including local `dev` builds.
+Symbol IDs are unchanged. Caches use the platform per-user directory unless
+`--cache-dir` or `ENTIRE_PLUGIN_DATA_DIR` overrides it.
+
+### Downstream compatibility check
+
+Run `mise exec -- python3 scripts/test-brain-health.py /path/to/entire-brain`
+against the Brain version intended for deployment. It builds this Graph checkout,
+generates four synthetic snapshots, and uses a Go test overlay to exercise Brain's
+actual stream reader without editing the consumer checkout. The check covers
+schema acceptance, summary merging, retained health metadata and diagnostic
+code/detail, re-serialized snapshots, and completeness-to-trust mapping.
+It is a reader compatibility check, not a full SQLite indexing or deployment test.
+
+Schema 1.3 advertises the optional fields; it does not negotiate completeness
+policy. Brain maps provider `ok`/`degraded`/`unsafe` to `trusted`/`partial`/`low`,
+so the requested 5% boundary changes those trust labels. This is intentional.
+Brain versions that only declare an older supported minor accept 1.3 with a
+newer-minor warning; do not suppress that warning without consumer-side evidence.
+Brain also has a separately computed completeness/freshness axis: its legacy
+10% parse-error rule is not changed by this Graph release. Consumers requiring
+the same policy on that axis need a separate coordinated update.

@@ -18,11 +18,10 @@ func TestCompletenessFailureCountExcludesIntentionalSkips(t *testing.T) {
 		{Code: "E_PARSE_ERROR"},
 		{Code: "E_UNSUPPORTED_LANGUAGE"},
 	}
-	if got := completenessFailureCount(failures); got != 2 {
-		t.Fatalf("completenessFailureCount = %d, want 2 (only E_PARSE_ERROR + E_UNSUPPORTED_LANGUAGE)", got)
-	}
-	if got := completenessFailureCount([]PartialFailure{{Code: "E_FILE_TOO_LARGE"}, {Code: "E_MINIFIED"}}); got != 0 {
-		t.Fatalf("only intentional skips should count 0, got %d", got)
+	for i, failure := range failures {
+		if got := IsIntentionalSkip(failure.Code); got != (i < 2) {
+			t.Fatalf("IsIntentionalSkip(%s) = %t", failure.Code, got)
+		}
 	}
 }
 
@@ -69,7 +68,10 @@ func TestCompletenessLevel(t *testing.T) {
 		// but the real source was never discovered. Must NOT report "ok".
 		{"parsed but no symbols", 0, 3, 3, 0, "degraded"},
 		{"majority unparsed", 0, 100, 30, 500, "unsafe"},
-		{"a few hard failures", 2, 100, 98, 4000, "degraded"},
+		{"immediately below threshold", 1, 21, 21, 4000, "ok"},
+		{"exactly at threshold", 1, 20, 20, 4000, "degraded"},
+		{"above threshold", 1, 19, 19, 4000, "degraded"},
+		{"a few hard failures", 2, 100, 98, 4000, "ok"},
 		{"mostly failures", 30, 100, 70, 500, "unsafe"},
 	}
 	for _, tc := range cases {
