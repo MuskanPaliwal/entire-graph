@@ -99,7 +99,7 @@ The command creates or updates these files:
   regenerated in full on each successful rerun; manual edits there do not
   survive.
 - `AGENTS.md` and `CLAUDE.md`: created if absent; otherwise one managed block
-  between `<!-- entire-graph:begin -->` and `<!-- entire-graph:end -->` markers
+  between `<!-- entire-agent:begin -->` and `<!-- entire-agent:end -->` markers
   is added or replaced. Text outside the markers is preserved.
 
 Review the three files, then commit them together when the instructions should
