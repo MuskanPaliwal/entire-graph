@@ -31,7 +31,7 @@ up to 71% depending on the coding scenario. As always, your mileage may vary.
 - Commit and Entire checkpoint analysis for reviewing changes in their repository context.
 - Working-tree queries that include uncommitted edits by default, with explicit committed-tree queries and reusable caches for matching repository states and options.
 - Full graph export through versioned NDJSON snapshots, stable symbol identifiers, a compact NDJSON format, and experimental SCIP export.
-- Per-repository agent activation, which installs graph-first guidance in AGENTS.md and CLAUDE.md.
+- Per-repository agent activation, which installs repository-specific guidance in AGENTS.md and CLAUDE.md.
 - Machine-readable coverage, exclusions, warnings, and partial failures, with relation confidence and resolution metadata.
 - Local analysis with no network requests, model calls, API keys, telemetry, or runtime grammar downloads.
 
@@ -95,11 +95,11 @@ entire graph init-agents --repo .
 
 The command creates or updates these files:
 
-- `.entire/graph-agent.md`: the agent operating guide. Generated in full and
+- `.entire/agent-guide.md`: the agent operating guide. Generated in full and
   regenerated in full on each successful rerun; manual edits there do not
   survive.
 - `AGENTS.md` and `CLAUDE.md`: created if absent; otherwise one managed block
-  between `<!-- entire-graph:begin -->` and `<!-- entire-graph:end -->` markers
+  between `<!-- entire-agent:begin -->` and `<!-- entire-agent:end -->` markers
   is added or replaced. Text outside the markers is preserved.
 
 Review the three files, then commit them together when the instructions should
@@ -187,14 +187,12 @@ evidence for the agent to check against source, not an oracle. The
 capture conditions, relevant agent and tool events, complete graph-command
 outputs, and the final answer verbatim.
 
-Each layer of the setup has its own success signal. Installation: both
-`entire version` and `entire graph version` succeed. Activation: the three
-files exist with intact markers. Adoption: in a fresh session, the first
-code-locating call is `entire graph query`. If the agent begins with broad
-grep or whole-file exploration, the guide may not have loaded or may not have
-been followed. Check the activation files and the client's instruction view;
-see [agent activation](docs/agents.md). Grounding: the answer cites files and
-lines the agent actually opened.
+Activation succeeds when the managed guide and pointers are present and
+`agent-guide` matches the installed guide for the same target and invocation.
+Follow the [coordinated workflow](docs/agent-coordination.md): Brain supplies task
+context in combined mode; Graph handles further discovery and structural analysis.
+Sufficient task or brief locations permit direct source inspection. Ground claims
+in inspected source and executed verification.
 
 ## Working tree and cache
 
