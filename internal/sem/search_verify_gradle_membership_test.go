@@ -69,6 +69,60 @@ func TestBuildSearchVerifyGradleDeclinedChildDoesNotFallBackToParent(t *testing.
 	}
 }
 
+func TestSearchVerifyUnrunnableGradleManifestFallsBackToAncestorMaven(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		files map[string]string
+	}{
+		{
+			name: "without_wrapper",
+			files: map[string]string{
+				"pom.xml":                         "<project/>",
+				"legacy/build.gradle":             "",
+				"legacy/src/main/java/A.java":     "",
+				"legacy/src/test/java/ATest.java": "",
+			},
+		},
+		{
+			name: "without_settings_for_ancestor_wrapper",
+			files: map[string]string{
+				"gradlew":                         "",
+				"pom.xml":                         "<project/>",
+				"legacy/build.gradle.kts":         "",
+				"legacy/src/main/java/A.java":     "",
+				"legacy/src/test/java/ATest.java": "",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			evidence := searchVerifyTestEvidence(tc.files)
+			results := []SearchResult{
+				{Rank: 1, FilePath: "legacy/src/main/java/A.java", Section: searchSectionPrimary},
+				{Rank: 2, FilePath: "legacy/src/test/java/ATest.java", Section: searchSectionCoveringTest},
+			}
+			got := buildSearchVerifyCommand(results, evidence)
+			if got == nil {
+				t.Fatal("expected an ancestor Maven command")
+			}
+			if got.Tier != searchVerifyTierNarrow {
+				t.Fatalf("tier = %q, want %q", got.Tier, searchVerifyTierNarrow)
+			}
+			want := "mvn -q -Dtest=ATest -DfailIfNoTests=false test"
+			if got.Command != want {
+				t.Fatalf("command = %q, want %q", got.Command, want)
+			}
+
+			suite := deriveSearchVerifySuiteCommand(searchVerifySubject{sourcePath: "legacy/src/main/java/A.java"}, &evidence)
+			if suite == nil {
+				t.Fatal("expected an ancestor Maven suite command")
+			}
+			if suite.Command != "mvn -q test" {
+				t.Fatalf("suite command = %q, want %q", suite.Command, "mvn -q test")
+			}
+		})
+	}
+}
+
 func TestSearchVerifyGradleNarrowRootProject(t *testing.T) {
 	for _, manifest := range []string{"build.gradle", "build.gradle.kts"} {
 		t.Run(manifest, func(t *testing.T) {

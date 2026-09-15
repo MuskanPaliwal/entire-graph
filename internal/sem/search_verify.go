@@ -512,8 +512,10 @@ func searchVerifyMirrorTest(sourcePath string, evidence *searchVerifyEvidence) s
 // A manifest that exists but licenses nothing generally does not stop the walk: a `Cargo.toml` that
 // is only a workspace stanza, or a monorepo leaf `package.json` with no test runner in it, is evidence
 // about the tree, not about how to run a test, so the walk continues outward to the manifest that is.
-// Gradle is different: an ancestor project can accept the same test pattern without owning the
-// nested project's sources, so a Gradle manifest that declines is a hard boundary.
+// Gradle is different once a wrapper and settings establish a project: an ancestor project can
+// accept the same test pattern without owning that project's sources, so a Gradle project that
+// declines is a hard boundary. A manifest without a runnable Gradle build does not block another
+// ecosystem's command farther up the tree.
 func deriveSearchVerifyCommand(subject searchVerifySubject, evidence *searchVerifyEvidence) *SearchVerifyCommand {
 	dir := path.Dir(subject.sourcePath)
 	if dir == "." || dir == "/" {
@@ -525,7 +527,7 @@ func deriveSearchVerifyCommand(subject searchVerifySubject, evidence *searchVeri
 				return command
 			}
 		}
-		if searchVerifyGradleManifest(dir, evidence) != "" {
+		if searchVerifyGradleProjectBoundary(dir, evidence) {
 			return nil
 		}
 		if dir == "" {
@@ -573,7 +575,7 @@ func deriveSearchVerifySuiteCommand(subject searchVerifySubject, evidence *searc
 			}
 		}
 		// An ancestor suite is not evidence of coverage for a Gradle project that declined here.
-		if searchVerifyGradleManifest(dir, evidence) != "" {
+		if searchVerifyGradleProjectBoundary(dir, evidence) {
 			return nil
 		}
 		if dir == "" {
@@ -655,6 +657,21 @@ func searchVerifyGradleManifest(dir string, evidence *searchVerifyEvidence) stri
 		}
 	}
 	return ""
+}
+
+func searchVerifyGradleProjectBoundary(dir string, evidence *searchVerifyEvidence) bool {
+	if searchVerifyGradleManifest(dir, evidence) == "" {
+		return false
+	}
+	wrapperDir, _, found := searchVerifyAncestorFile(dir, "gradlew", evidence)
+	if !found {
+		return false
+	}
+	if wrapperDir == dir {
+		return true
+	}
+	_, _, _, found = searchVerifyGradleAncestorSettings(dir, wrapperDir, evidence)
+	return found
 }
 
 type searchVerifyGradleTarget struct {
