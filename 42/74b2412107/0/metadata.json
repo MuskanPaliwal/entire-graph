@@ -1,0 +1,74 @@
+{
+  "cli_version": "0.10.7-nightly.202609130627.8a43e78f1",
+  "checkpoint_id": "4274b2412107",
+  "session_id": "01a0a592-30a0-71c0-96e3-3e3b7b79d43f",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-15T15:49:37.249867Z",
+  "branch": "fix-gradle-verify-project-membership-219",
+  "checkpoints_count": 3,
+  "save_step_count": 2,
+  "files_touched": [
+    "internal/sem/search_verify.go",
+    "internal/sem/search_verify_gradle_membership_test.go"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.6-sol",
+  "turn_id": "f8a1521ceac9",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 99098,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 3385984,
+    "output_tokens": 13261,
+    "api_call_count": 54,
+    "subagent_tokens_complete": true
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-15T15:49:37.2286Z",
+    "agent_lines": 7,
+    "agent_removed": 5,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 7,
+    "total_lines_changed": 12,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 315,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269,
+        "HANDOFF.md": 46
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 53,
+      "agent_lines_removed": 5,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 269,
+      "user_lines_removed": 0,
+      "agent_lines_added": 53,
+      "agent_lines_removed": 5,
+      "user_added_per_file": {
+        ".opencode/plugins/entire.ts": 269
+      }
+    }
+  ]
+}
