@@ -176,10 +176,12 @@ func TestSearchVerifyGradleParentProjectRename(t *testing.T) {
 			wantSuite:  "./gradlew :modules:lib:test",
 		},
 		{
-			name:       "relocated_parent",
-			settings:   "include ':modules:lib'\nproject(':modules').projectDir = file('other')\n",
-			wantNarrow: "./gradlew :modules:lib:test --tests 'ATest'",
-			wantSuite:  "./gradlew :modules:lib:test",
+			name:     "relocated_parent",
+			settings: "include ':modules:lib'\nproject(':modules').projectDir = file('other')\n",
+		},
+		{
+			name:     "relocated_parent_setter",
+			settings: "include(\":modules:lib\")\nproject(\":modules\").setProjectDir(file(\"other\"))\n",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

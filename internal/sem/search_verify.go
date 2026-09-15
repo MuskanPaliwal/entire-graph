@@ -828,7 +828,7 @@ func searchVerifyGradleSettingsRemapsProject(settings, project string) bool {
 		if named || ancestor {
 			statement := searchVerifyGradleStatementTail(script[index:])
 			if searchVerifyGradleAssignsProperty(statement, "name", "setName") ||
-				(named && searchVerifyGradleAssignsProperty(statement, "projectDir", "setProjectDir")) {
+				searchVerifyGradleAssignsProperty(statement, "projectDir", "setProjectDir") {
 				return true
 			}
 		}
