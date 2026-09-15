@@ -1,0 +1,13 @@
+### Medium finding
+
+**Location:** `internal/sem/search_verify.go:529`
+
+This hard stop treats any `build.gradle[.kts]` as an authoritative project boundary even when Gradle derivation failed because no wrapper or settings established a runnable build. In mixed-build repositories, a nested Gradle manifest can therefore suppress a valid ancestor Maven/npm verification command that the previous upward walk would emit. let's fix this finding from trail
+
+---
+
+now
+
+---
+
+commit and push the changes
