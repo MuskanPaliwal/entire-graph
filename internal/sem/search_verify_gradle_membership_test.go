@@ -69,10 +69,14 @@ func TestBuildSearchVerifyGradleDeclinedChildDoesNotFallBackToParent(t *testing.
 	}
 }
 
-func TestSearchVerifyUnrunnableGradleManifestFallsBackToAncestorMaven(t *testing.T) {
+func TestSearchVerifyUnrunnableGradleManifestFallsBackToAncestorBuildSystem(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		files map[string]string
+		name        string
+		files       map[string]string
+		sourcePath  string
+		testPath    string
+		wantCommand string
+		wantSuite   string
 	}{
 		{
 			name: "without_wrapper",
@@ -82,6 +86,10 @@ func TestSearchVerifyUnrunnableGradleManifestFallsBackToAncestorMaven(t *testing
 				"legacy/src/main/java/A.java":     "",
 				"legacy/src/test/java/ATest.java": "",
 			},
+			sourcePath:  "legacy/src/main/java/A.java",
+			testPath:    "legacy/src/test/java/ATest.java",
+			wantCommand: "mvn -q -Dtest=ATest -DfailIfNoTests=false test",
+			wantSuite:   "mvn -q test",
 		},
 		{
 			name: "without_settings_for_ancestor_wrapper",
@@ -92,32 +100,67 @@ func TestSearchVerifyUnrunnableGradleManifestFallsBackToAncestorMaven(t *testing
 				"legacy/src/main/java/A.java":     "",
 				"legacy/src/test/java/ATest.java": "",
 			},
+			sourcePath:  "legacy/src/main/java/A.java",
+			testPath:    "legacy/src/test/java/ATest.java",
+			wantCommand: "mvn -q -Dtest=ATest -DfailIfNoTests=false test",
+			wantSuite:   "mvn -q test",
+		},
+		{
+			name: "rejected_gradle_project_with_maven_ancestor",
+			files: map[string]string{
+				"gradlew":                         "",
+				"settings.gradle":                 "include ':app'\n",
+				"build.gradle":                    "",
+				"pom.xml":                         "<project/>",
+				"legacy/build.gradle":             "",
+				"legacy/src/main/java/A.java":     "",
+				"legacy/src/test/java/ATest.java": "",
+			},
+			sourcePath:  "legacy/src/main/java/A.java",
+			testPath:    "legacy/src/test/java/ATest.java",
+			wantCommand: "mvn -q -Dtest=ATest -DfailIfNoTests=false test",
+			wantSuite:   "mvn -q test",
+		},
+		{
+			name: "rejected_gradle_project_with_node_ancestor",
+			files: map[string]string{
+				"gradlew":                 "",
+				"settings.gradle":         "include ':app'\n",
+				"build.gradle":            "",
+				"package.json":            `{"devDependencies":{"jest":"29"}}`,
+				"legacy/build.gradle.kts": "",
+				"legacy/src/a.ts":         "",
+				"legacy/src/a.test.ts":    "",
+			},
+			sourcePath:  "legacy/src/a.ts",
+			testPath:    "legacy/src/a.test.ts",
+			wantCommand: "npx jest legacy/src/a.test.ts",
+			wantSuite:   "npx jest",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			evidence := searchVerifyTestEvidence(tc.files)
 			results := []SearchResult{
-				{Rank: 1, FilePath: "legacy/src/main/java/A.java", Section: searchSectionPrimary},
-				{Rank: 2, FilePath: "legacy/src/test/java/ATest.java", Section: searchSectionCoveringTest},
+				{Rank: 1, FilePath: tc.sourcePath, Section: searchSectionPrimary},
+				{Rank: 2, FilePath: tc.testPath, Section: searchSectionCoveringTest},
 			}
 			got := buildSearchVerifyCommand(results, evidence)
 			if got == nil {
-				t.Fatal("expected an ancestor Maven command")
+				t.Fatal("expected an ancestor build-system command")
 			}
 			if got.Tier != searchVerifyTierNarrow {
 				t.Fatalf("tier = %q, want %q", got.Tier, searchVerifyTierNarrow)
 			}
-			want := "mvn -q -Dtest=ATest -DfailIfNoTests=false test"
-			if got.Command != want {
-				t.Fatalf("command = %q, want %q", got.Command, want)
+			if got.Command != tc.wantCommand {
+				t.Fatalf("command = %q, want %q", got.Command, tc.wantCommand)
 			}
 
-			suite := deriveSearchVerifySuiteCommand(searchVerifySubject{sourcePath: "legacy/src/main/java/A.java"}, &evidence)
+			suite := deriveSearchVerifySuiteCommand(searchVerifySubject{sourcePath: tc.sourcePath}, &evidence)
 			if suite == nil {
-				t.Fatal("expected an ancestor Maven suite command")
+				t.Fatal("expected an ancestor build-system suite command")
 			}
-			if suite.Command != "mvn -q test" {
-				t.Fatalf("suite command = %q, want %q", suite.Command, "mvn -q test")
+			if suite.Command != tc.wantSuite {
+				t.Fatalf("suite command = %q, want %q", suite.Command, tc.wantSuite)
 			}
 		})
 	}

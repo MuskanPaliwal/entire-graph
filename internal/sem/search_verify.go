@@ -514,21 +514,25 @@ func searchVerifyMirrorTest(sourcePath string, evidence *searchVerifyEvidence) s
 // about the tree, not about how to run a test, so the walk continues outward to the manifest that is.
 // Gradle is different once a wrapper and settings establish a project: an ancestor project can
 // accept the same test pattern without owning that project's sources, so a Gradle project that
-// declines is a hard boundary. A manifest without a runnable Gradle build does not block another
-// ecosystem's command farther up the tree.
+// declines blocks ancestor Gradle derivation. Other ecosystems still participate farther up the
+// tree, and a manifest without a runnable Gradle build blocks nothing.
 func deriveSearchVerifyCommand(subject searchVerifySubject, evidence *searchVerifyEvidence) *SearchVerifyCommand {
 	dir := path.Dir(subject.sourcePath)
 	if dir == "." || dir == "/" {
 		dir = ""
 	}
+	gradleBlocked := false
 	for depth := 0; depth <= searchVerifyMaxDepth; depth++ {
-		for _, derive := range searchVerifyDerivations {
-			if command := derive(dir, subject, evidence); command != nil {
+		for _, derivation := range searchVerifyDerivations {
+			if gradleBlocked && derivation.gradle {
+				continue
+			}
+			if command := derivation.run(dir, subject, evidence); command != nil {
 				return command
 			}
 		}
-		if searchVerifyGradleProjectBoundary(dir, evidence) {
-			return nil
+		if !gradleBlocked && searchVerifyBlocksAncestorGradle(dir, evidence) {
+			gradleBlocked = true
 		}
 		if dir == "" {
 			break
@@ -546,17 +550,20 @@ func deriveSearchVerifyCommand(subject searchVerifySubject, evidence *searchVeri
 // searchVerifyDerivations is the ordered list of build systems consulted at each directory level.
 // Language manifests come before generic ones: a Rust crate with a convenience Makefile must yield
 // the crate's own test command, not `make test`.
-var searchVerifyDerivations = []func(string, searchVerifySubject, *searchVerifyEvidence) *SearchVerifyCommand{
-	deriveSearchVerifyCargo,
-	deriveSearchVerifyGo,
-	deriveSearchVerifyMaven,
-	deriveSearchVerifyGradle,
-	deriveSearchVerifyNode,
-	deriveSearchVerifyComposer,
-	deriveSearchVerifyPytest,
-	deriveSearchVerifyRuby,
-	deriveSearchVerifyCMake,
-	deriveSearchVerifyMake,
+var searchVerifyDerivations = []struct {
+	run    func(string, searchVerifySubject, *searchVerifyEvidence) *SearchVerifyCommand
+	gradle bool
+}{
+	{run: deriveSearchVerifyCargo},
+	{run: deriveSearchVerifyGo},
+	{run: deriveSearchVerifyMaven},
+	{run: deriveSearchVerifyGradle, gradle: true},
+	{run: deriveSearchVerifyNode},
+	{run: deriveSearchVerifyComposer},
+	{run: deriveSearchVerifyPytest},
+	{run: deriveSearchVerifyRuby},
+	{run: deriveSearchVerifyCMake},
+	{run: deriveSearchVerifyMake},
 }
 
 // deriveSearchVerifySuiteCommand is the whole-suite fallback consulted only when no narrow command
@@ -568,15 +575,18 @@ func deriveSearchVerifySuiteCommand(subject searchVerifySubject, evidence *searc
 	if dir == "." || dir == "/" {
 		dir = ""
 	}
+	gradleBlocked := false
 	for depth := 0; depth <= searchVerifyMaxDepth; depth++ {
-		for _, derive := range searchVerifySuiteDerivations {
-			if command := derive(dir, evidence); command != nil {
+		for _, derivation := range searchVerifySuiteDerivations {
+			if gradleBlocked && derivation.gradle {
+				continue
+			}
+			if command := derivation.run(dir, evidence); command != nil {
 				return command
 			}
 		}
-		// An ancestor suite is not evidence of coverage for a Gradle project that declined here.
-		if searchVerifyGradleProjectBoundary(dir, evidence) {
-			return nil
+		if !gradleBlocked && searchVerifyBlocksAncestorGradle(dir, evidence) {
+			gradleBlocked = true
 		}
 		if dir == "" {
 			break
@@ -593,17 +603,20 @@ func deriveSearchVerifySuiteCommand(subject searchVerifySubject, evidence *searc
 
 // searchVerifySuiteDerivations mirrors searchVerifyDerivations, language-specific before generic, so
 // a Rust crate with a convenience Makefile still yields `cargo test`, not `make test`.
-var searchVerifySuiteDerivations = []func(string, *searchVerifyEvidence) *SearchVerifyCommand{
-	deriveSearchVerifySuiteCargo,
-	deriveSearchVerifySuiteGo,
-	deriveSearchVerifySuiteMaven,
-	deriveSearchVerifySuiteGradle,
-	deriveSearchVerifySuiteNode,
-	deriveSearchVerifySuiteComposer,
-	deriveSearchVerifySuitePytest,
-	deriveSearchVerifySuiteRuby,
-	deriveSearchVerifySuiteCMake,
-	deriveSearchVerifySuiteMake,
+var searchVerifySuiteDerivations = []struct {
+	run    func(string, *searchVerifyEvidence) *SearchVerifyCommand
+	gradle bool
+}{
+	{run: deriveSearchVerifySuiteCargo},
+	{run: deriveSearchVerifySuiteGo},
+	{run: deriveSearchVerifySuiteMaven},
+	{run: deriveSearchVerifySuiteGradle, gradle: true},
+	{run: deriveSearchVerifySuiteNode},
+	{run: deriveSearchVerifySuiteComposer},
+	{run: deriveSearchVerifySuitePytest},
+	{run: deriveSearchVerifySuiteRuby},
+	{run: deriveSearchVerifySuiteCMake},
+	{run: deriveSearchVerifySuiteMake},
 }
 
 // searchVerifySuiteCommand builds a whole-suite command, labeling both the target (no covering test
@@ -659,19 +672,8 @@ func searchVerifyGradleManifest(dir string, evidence *searchVerifyEvidence) stri
 	return ""
 }
 
-func searchVerifyGradleProjectBoundary(dir string, evidence *searchVerifyEvidence) bool {
-	if searchVerifyGradleManifest(dir, evidence) == "" {
-		return false
-	}
-	wrapperDir, _, found := searchVerifyAncestorFile(dir, "gradlew", evidence)
-	if !found {
-		return false
-	}
-	if wrapperDir == dir {
-		return true
-	}
-	_, _, _, found = searchVerifyGradleAncestorSettings(dir, wrapperDir, evidence)
-	return found
+func searchVerifyBlocksAncestorGradle(dir string, evidence *searchVerifyEvidence) bool {
+	return searchVerifyGradleManifest(dir, evidence) != ""
 }
 
 type searchVerifyGradleTarget struct {
