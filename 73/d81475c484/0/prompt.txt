@@ -1,1 +1,1 @@
-use $simplify once you are done with the tests
+commit the changes and push those
