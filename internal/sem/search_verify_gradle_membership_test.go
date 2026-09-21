@@ -2,6 +2,80 @@ package sem
 
 import "testing"
 
+func TestBuildSearchVerifyGradleNestedWrapperPreservesProjectOwnership(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		settings    string
+		ownSettings bool
+		rootWrapper bool
+		want        string
+	}{
+		{"included_project", "include ':lib'\n", false, true, "cd lib && ./gradlew -p .. :lib:test"},
+		{"included_project_without_root_wrapper", "include ':lib'\n", false, false, "cd lib && ./gradlew -p .. :lib:test"},
+		{"undeclared_project", "include ':app'\n", false, true, ""},
+		{"remapped_project", "include ':lib'\nproject(':lib').projectDir = file('other')\n", false, true, ""},
+		{"independent_build", "include ':app'\n", true, true, "cd lib && ./gradlew"},
+		{"standalone_build_without_settings", "", false, false, "cd lib && ./gradlew"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, narrow := range []bool{true, false} {
+				tier := searchVerifyTierSuite
+				if narrow {
+					tier = searchVerifyTierNarrow
+				}
+				t.Run(tier, func(t *testing.T) {
+					files := map[string]string{
+						"build.gradle":             "",
+						"lib/gradlew":              "",
+						"lib/build.gradle":         "",
+						"lib/src/main/java/A.java": "",
+					}
+					if tc.settings != "" {
+						files["settings.gradle"] = tc.settings
+					}
+					if tc.rootWrapper {
+						files["gradlew"] = ""
+					}
+					if tc.ownSettings {
+						files["lib/settings.gradle"] = ""
+					}
+					results := []SearchResult{
+						{Rank: 1, FilePath: "lib/src/main/java/A.java", Section: searchSectionPrimary},
+					}
+					want := tc.want
+					if tc.ownSettings || tc.settings == "" {
+						if narrow {
+							want += " :test"
+						} else {
+							want += " test"
+						}
+					}
+					if narrow {
+						results = append(results, SearchResult{
+							Rank: 2, FilePath: "lib/src/test/java/ATest.java", Section: searchSectionCoveringTest,
+						})
+						if want != "" {
+							want += " --tests 'ATest'"
+						}
+					}
+					wantTier := tier
+					if want == "" {
+						want, wantTier = searchVerifyNoneCommand, searchVerifyTierNone
+					}
+					got := buildSearchVerifyCommand(results, searchVerifyTestEvidence(files))
+					if got == nil {
+						t.Fatal("expected an explicit verification result")
+					}
+					t.Logf("settings=%q own settings=%t root wrapper=%t: tier=%s command=%q", tc.settings, tc.ownSettings, tc.rootWrapper, got.Tier, got.Command)
+					if got.Command != want || got.Tier != wantTier {
+						t.Fatalf("command=%q tier=%q, want command=%q tier=%q", got.Command, got.Tier, want, wantTier)
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestBuildSearchVerifyGradleUndeclaredProjectFallback(t *testing.T) {
 	for _, tc := range []struct {
 		name      string

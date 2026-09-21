@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -708,23 +709,23 @@ func searchVerifyGradleTargetForDir(dir string, evidence *searchVerifyEvidence) 
 		commandPrefix: "./gradlew",
 		derivedFrom:   manifest + " + " + wrapperPath,
 	}
-	if wrapperDir == dir {
-		return target, true
-	}
-	settingsDir, settingsPath, settings, found := searchVerifyGradleAncestorSettings(dir, wrapperDir, evidence)
+	settingsDir, settingsPath, settings, found := searchVerifyGradleAncestorSettings(dir, evidence)
 	if !found {
+		if wrapperDir == dir {
+			return target, true
+		}
 		return searchVerifyGradleTarget{}, false
 	}
 	target.derivedFrom += " + " + settingsPath
 	if settingsDir != wrapperDir {
-		buildRoot, inside := searchVerifyRelative(wrapperDir, settingsDir)
-		if !inside {
+		buildRoot, err := filepath.Rel(wrapperDir, settingsDir)
+		if err != nil {
 			return searchVerifyGradleTarget{}, false
 		}
-		target.commandPrefix += " -p " + shellQuotePath(buildRoot)
+		target.commandPrefix += " -p " + shellQuotePath(filepath.ToSlash(buildRoot))
 	}
 	if settingsDir == dir {
-		target.selectsBuild = true
+		target.selectsBuild = settingsDir != wrapperDir
 		return target, true
 	}
 	projectDir, inside := searchVerifyRelative(settingsDir, dir)
@@ -763,14 +764,14 @@ func searchVerifyGradleSettings(dir string, evidence *searchVerifyEvidence) (str
 }
 
 func searchVerifyGradleAncestorSettings(
-	dir, stop string,
+	dir string,
 	evidence *searchVerifyEvidence,
 ) (string, string, string, bool) {
 	for depth := 0; depth <= searchVerifyMaxDepth; depth++ {
 		if settingsPath, settings, found := searchVerifyGradleSettings(dir, evidence); found {
 			return dir, settingsPath, settings, true
 		}
-		if dir == stop || dir == "" {
+		if dir == "" {
 			break
 		}
 		parent := path.Dir(dir)
