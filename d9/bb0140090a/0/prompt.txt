@@ -1,0 +1,13 @@
+https://github.com/entireio/entire-graph/pull/249 this is my pr and this is the team member pr who just ignored my pr: https://github.com/entireio/entire-graph/pull/261 so i want you to compare and review both and tell me if my pr acyually fix the issue or not
+
+---
+
+okay we fix only the one regression we didn;t fix and push the changes. then we wtite a comment there
+
+---
+
+make the comment humanish and polite
+
+---
+
+make the comment humanish and polite and put it on the other pr , but verify it with me before posting
