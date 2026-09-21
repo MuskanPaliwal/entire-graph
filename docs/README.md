@@ -13,7 +13,7 @@ authoritative in `entire graph capabilities --json`.
 | [Root README](../README.md) | What Entire Graph is, installation, activation, and the first agent task |
 | [Agent activation](agents.md) | `init-agents` file effects, rerun and marker behavior, client notes, verification, and recovery |
 | [Command reference](commands.md) | Task-grouped manual and automation surface, with the defaults that matter |
-| [Search results and ranking](search.md) | What `search` returns and how to read it |
+| [Search results and ranking](search.md) | What `query` returns and how to read it |
 | [Operations](operations.md) | Installation channels, cache locations and keys, prewarming, reports, and release archives |
 | [Trust and security](trust-and-security.md) | What the tool reads, writes, executes, and sends over the network |
 | [Language support](language-support.md) | Current semantic and inventory-only language matrix |

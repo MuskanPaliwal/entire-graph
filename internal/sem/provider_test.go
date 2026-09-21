@@ -178,7 +178,7 @@ export function handleRoute() {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if snapshot.Header.SchemaVersion != "1.2" {
+	if snapshot.Header.SchemaVersion != "1.3" {
 		t.Fatalf("schema version = %q", snapshot.Header.SchemaVersion)
 	}
 	if snapshot.Header.Provider != ProviderName {
@@ -18232,7 +18232,7 @@ func TestSkipVendoredDirAlwaysExcludesGitDir(t *testing.T) {
 	load := func(content string) ignoreMatcher {
 		t.Helper()
 		var matcher ignoreMatcher
-		if err := matcher.loadContent(content, false); err != nil {
+		if err := matcher.loadContent(content, false, repoIgnoreOrigin(".gitignore")); err != nil {
 			t.Fatal(err)
 		}
 		return matcher

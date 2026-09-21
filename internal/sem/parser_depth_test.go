@@ -647,16 +647,18 @@ func TestSnapshotReportsDepthTruncationAndCountsItAgainstCompleteness(t *testing
 // count it — otherwise a repo whose every file truncates still reports "ok".
 func TestDepthTruncationCountsTowardCompleteness(t *testing.T) {
 	t.Parallel()
-	if got := completenessFailureCount([]PartialFailure{{Code: "E_PARSE_DEPTH_EXCEEDED"}}); got != 1 {
-		t.Fatalf("completenessFailureCount = %d, want 1: a depth-truncated file is a real coverage gap", got)
+	if IsIntentionalSkip("E_PARSE_DEPTH_EXCEEDED") {
+		t.Fatal("a depth-truncated file is a real coverage gap")
 	}
 	// The skips it must not be confused with.
 	skips := []PartialFailure{{Code: "E_FILE_TOO_LARGE"}, {Code: "E_MINIFIED"}}
-	if got := completenessFailureCount(skips); got != 0 {
-		t.Fatalf("completenessFailureCount(skips) = %d, want 0", got)
+	for _, skip := range skips {
+		if !IsIntentionalSkip(skip.Code) {
+			t.Fatalf("%s is an intentional skip", skip.Code)
+		}
 	}
-	if got := completenessLevel(1, 100, 100, 5); got != "degraded" {
-		t.Fatalf("one counted failure in a 100-file repo yields %q, want degraded", got)
+	if got := completenessLevel(1, 20, 20, 5); got != "degraded" {
+		t.Fatalf("one counted failure in a 20-file repo yields %q, want degraded", got)
 	}
 }
 

@@ -182,9 +182,9 @@ render() {
 		}
 		# Verbs that do work on the codebase. Locate verbs rank first in the split.
 		function isWork(n) {
-			return index(" search neighbors impact diff analyze commit checkpoint symbols edges snapshot index ", " " n " ") > 0
+			return index(" query search neighbors impact diff analyze commit checkpoint symbols edges snapshot index ", " " n " ") > 0
 		}
-		function isLocate(n) { return index(" search neighbors impact ", " " n " ") > 0 }
+		function isLocate(n) { return index(" query search neighbors impact ", " " n " ") > 0 }
 		# Segments are accumulated with their VISIBLE width (colour codes and multi-byte
 		# glyphs excluded, counted by the caller) and a drop rank: 0 never drops, 1 drops
 		# first. Overflow is handled by dropping whole segments, never by truncating one.

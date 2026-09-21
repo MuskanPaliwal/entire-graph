@@ -87,10 +87,12 @@ func Run(ctx context.Context, opts Options, args []string) error {
 		return runProviderRecords(ctx, opts, args[1:], "symbols")
 	case "edges":
 		return runProviderRecords(ctx, opts, args[1:], "edges")
-	case "search":
+	case "query", "search":
 		return runSearch(ctx, opts, args[1:])
 	case "index":
 		return runIndex(ctx, opts, args[1:])
+	case "health":
+		return runHealth(ctx, opts, args[1:])
 	case "def":
 		return runDef(ctx, opts, args[1:])
 	case "explain":
